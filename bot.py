@@ -101,6 +101,7 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
                 
                 try:
                     pm = r1.json()['id']
+                    await update.message.reply_text(r1.text)
                 except:
                     er = r1.json()['error']['message']
                     if 'Your card number is incorrect.' in r1.text:
