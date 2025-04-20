@@ -101,7 +101,7 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
                 
                 try:
                     pm = r1.json()['id']
-                    await update.message.reply_text(pm)
+            
                     
                 except:
                     er = r1.json()['error']['message']
@@ -159,10 +159,10 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
                 await update.message.reply_text(r2.text)
                 
                 
-                if "Your card was declined" in r2.text:
-                    msg = f'''✘ Declined 
+                if "Your card has insufficient funds" in r2.text:
+                    msg = f'''✘ Aprroved 
 ✘ CC ➠ {P}
-✘ Result ➠ Declined ❌
+✘ Result ➠ Approved ✅
 ✘ Gateway ➠ Stripe Auth
 ━━━━━━━━━━━━━━━━━  
 ✘ By ➠ KMZ BOT'''
@@ -170,7 +170,7 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
                     await send_telegram_alert(token, chat_id, msg)
                 
                 else:
-                    await update.message.reply_text(f'[ {start_num} ] {P} ➠➠ Approved ✅')
+                    await update.message.reply_text(f'[ {start_num} ] {P} ➠➠ ✘ Card is Declined ')
 
             except Exception as e:
                 await update.message.reply_text(f'Error processing line {start_num}: {str(e)}')
