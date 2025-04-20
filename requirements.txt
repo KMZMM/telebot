@@ -3,3 +3,4 @@ pyTelegramBotAPI
 Flask
 pyfiglet
 requests
+quart
