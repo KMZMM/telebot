@@ -2,10 +2,10 @@ import os
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
-from flask import Flask, request
 import requests
 import time
 import pyfiglet
+from quart import Quart, request, jsonify
 
 # Enable logging
 logging.basicConfig(
@@ -23,8 +23,8 @@ C = '\033[2;35m'
 logo = pyfiglet.figlet_format('KMZ BOT')
 print(Z + logo)
 
-# Flask app for webhook handling
-app = Flask(__name__)
+# Quart app for webhook handling
+app = Quart(__name__)
 
 # Telegram Bot Token
 TOKEN = os.getenv('BOT_TOKEN')  # Should be stored in the environment variable
@@ -32,19 +32,6 @@ bot_url = f"https://api.telegram.org/bot{TOKEN}"
 
 # Telegram bot application
 application = Application.builder().token(TOKEN).build()
-
-# Route to handle webhook requests
-@app.route(f'/{TOKEN}', methods=['POST'])
-def webhook():
-    """Handle incoming updates from Telegram"""
-    update = Update.de_json(request.json, application.bot)
-    application.process_update(update)
-    return '', 200  # Return 200 OK response to Telegram
-
-@app.route('/')
-def index():
-    """Basic health check endpoint"""
-    return 'KMZ Bot is running!'
 
 # Command and message handlers
 async def start(update: Update, context: CallbackContext) -> None:
@@ -205,7 +192,7 @@ async def handle_text(update: Update, context: CallbackContext) -> None:
         context.user_data['chat_id'] = text
         await update.message.reply_text('Chat ID saved. Now please send your combo file (as document):')
 
-# Setup webhook
+# Flask to Quart: Setup webhook
 def set_webhook():
     """Set up the webhook URL"""
     webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
@@ -215,6 +202,23 @@ def set_webhook():
     else:
         print("Failed to set webhook")
 
-if __name__ == '__main__':
+@app.route(f'/{TOKEN}', methods=['POST'])
+async def webhook():
+    """Handle incoming updates from Telegram"""
+    update = Update.de_json(await request.json(), application.bot)
+    await application.process_update(update)
+    return '', 200  # Return 200 OK response to Telegram
+
+@app.route('/')
+async def index():
+    """Basic health check endpoint"""
+    return 'KMZ Bot is running!'
+
+# Run the bot and Flask app asynchronously
+async def start_app():
     set_webhook()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    await application.run_polling()
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(start_app())
