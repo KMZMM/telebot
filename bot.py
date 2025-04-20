@@ -156,7 +156,6 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
     headers=headers,
     data=data,
 )
-                await update.message.reply_text(r2.text)
                 
                 
                 if "Your card has insufficient funds" in r2.text:
