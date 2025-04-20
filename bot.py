@@ -54,7 +54,10 @@ async def help_command(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text(
         'Help: Send me a combo file (text file) with CC details in format:\n'
         'cardnumber|mm|yy|cvc\n\n'
-        'Make sure to send your bot token and chat ID first if you haven\'t.'
+        'Commands:\n'
+        '/token <your_bot_token> - Set your bot token\n'
+        '/chatid <your_chat_id> - Set your chat ID\n'
+        '/status - Check current processing status'
     )
 
 async def handle_document(update: Update, context: CallbackContext) -> None:
@@ -72,10 +75,12 @@ async def handle_document(update: Update, context: CallbackContext) -> None:
             
             if 'token' not in context.user_data:
                 await update.message.reply_text('❌ Please send your Telegram bot token first using /token command')
+                processing_state['is_processing'] = False
                 return
             
             if 'chat_id' not in context.user_data:
                 await update.message.reply_text('❌ Please send your Telegram chat ID first using /chatid command')
+                processing_state['is_processing'] = False
                 return
             
             # Start processing in background to avoid blocking
@@ -242,6 +247,18 @@ async def handle_chatid(update: Update, context: CallbackContext) -> None:
     chat_id = ' '.join(context.args)
     context.user_data['chat_id'] = chat_id
     await update.message.reply_text("✅ Chat ID saved!")
+
+async def handle_text(update: Update, context: CallbackContext) -> None:
+    """Handle text messages"""
+    text = update.message.text.strip()
+    
+    # If we're expecting token or chat ID but user sent raw text
+    if 'token' not in context.user_data:
+        await update.message.reply_text("Please set your bot token first using /token command")
+    elif 'chat_id' not in context.user_data:
+        await update.message.reply_text("Please set your chat ID first using /chatid command")
+    else:
+        await update.message.reply_text("Please send a combo file (text document) to start checking")
 
 async def status(update: Update, context: CallbackContext) -> None:
     """Check bot status"""
