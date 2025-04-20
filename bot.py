@@ -319,7 +319,7 @@ async def index():
 if __name__ == '__main__':
     
     # For Render.com, you might need to use their provided URL
-    # webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
+     webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
     
     try:
         application.bot.set_webhook(webhook_url)
