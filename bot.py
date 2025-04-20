@@ -1,13 +1,10 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import telebot
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Hello! Welcome to my Telegram bot.')
+TOKEN = "7639044551:AAFUY8V9CzsBwIk0HZxvQxac691axmv1DY4"
+bot = telebot.TeleBot(TOKEN)
 
-if __name__ == '__main__':
-    app = ApplicationBuilder().token('7639044551:AAFUY8V9CzsBwIk0HZxvQxac691axmv1DY4').build()
-    
-    app.add_handler(CommandHandler('start', start))
-    
-    app.run_polling()
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, f"You said: {message.text}")
 
+bot.polling(non_stop=True)
