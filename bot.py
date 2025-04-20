@@ -7,12 +7,13 @@ import time
 import pyfiglet
 from quart import Quart, request, jsonify
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
-    level=logging.INFO
-)
+#enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+async def start(update, context):
+    await update.message.reply_text('Hello, welcome to the bot!')
 
 # Color codes
 Z = '\033[1;31m'
@@ -31,7 +32,7 @@ TOKEN = os.getenv('BOT_TOKEN')  # Should be stored in the environment variable
 bot_url = f"https://api.telegram.org/bot{TOKEN}"
 
 # Telegram bot application
-application = Application.builder().token(TOKEN).build()
+application = Application.builder().token(TOKEN).build
 
 # Command and message handlers
 async def start(update: Update, context: CallbackContext) -> None:
