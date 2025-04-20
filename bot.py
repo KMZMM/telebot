@@ -145,13 +145,24 @@ async def handle_text(update: Update, context: CallbackContext) -> None:
 # ========== APPLICATION SETUP ==========
 
 # Initialize Telegram application
+# Telegram bot application - OLD VERSION (problematic)
 application = Application.builder().token(TOKEN).build()
 
-# Add handlers (NOW THESE FUNCTIONS ARE DEFINED)
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("help", help_command))
-application.add_handler(MessageHandler(filters.Document.TEXT, handle_document))
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+# Change to this NEW VERSION:
+def setup_application():
+    """Initialize and configure the Telegram application"""
+    application = Application.builder().token(TOKEN).build()
+    
+    # Add handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(MessageHandler(filters.Document.TEXT, handle_document))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    
+    return application
+
+# Initialize the application properly
+application = setup_application()
 
 # Webhook setup
 def set_webhook():
@@ -175,12 +186,17 @@ async def webhook():
     try:
         json_data = await request.get_json()
         update = Update.de_json(json_data, application.bot)
-        await application.process_update(update)
+        
+        # Initialize update processing
+        async with application:
+            await application.initialize()
+            await application.process_update(update)
+            
         return '', 200
     except Exception as e:
         logger.error(f"Error in webhook: {e}")
         return jsonify({"status": "error"}), 500
-
+        
 @app.route('/')
 async def index():
     """Basic health check endpoint"""
