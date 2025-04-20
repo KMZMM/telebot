@@ -317,8 +317,6 @@ async def index():
     return 'KMZ Bot is running!'
 
 if __name__ == '__main__':
-    # Set webhook URL - replace with your actual domain
-    webhook_url = f"https://your-domain.com/{TOKEN}"
     
     # For Render.com, you might need to use their provided URL
     # webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
