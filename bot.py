@@ -16,6 +16,19 @@ async def start(update: Update, context: CallbackContext) -> None:
         'Send me a combo file (text file with CC details) to start checking.'
     )
 
+async def handle_text(update: Update, context: CallbackContext) -> None:
+    """Handle text messages"""
+    text = update.message.text
+    
+    if 'token' not in context.user_data:
+        context.user_data['token'] = text
+        await update.message.reply_text('Token saved. Now please send your chat ID:')
+        return
+    
+    if 'chat_id' not in context.user_data:
+        context.user_data['chat_id'] = text
+        await update.message.reply_text('Chat ID saved. Now please send your combo file (as document):')
+
 async def help_command(update: Update, context: CallbackContext) -> None:
     """Send help message"""
     await update.message.reply_text(
@@ -173,18 +186,7 @@ async def send_telegram_alert(token: str, chat_id: str, message: str):
     url = f"https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}"
     requests.post(url)
 
-async def handle_text(update: Update, context: CallbackContext) -> None:
-    """Handle text messages"""
-    text = update.message.text
-    
-    if 'token' not in context.user_data:
-        context.user_data['token'] = text
-        await update.message.reply_text('Token saved. Now please send your chat ID:')
-        return
-    
-    if 'chat_id' not in context.user_data:
-        context.user_data['chat_id'] = text
-        await update.message.reply_text('Chat ID saved. Now please send your combo file (as document):')
+
 
 @app.route('/webhook', methods=['POST'])
 async def webhook():
