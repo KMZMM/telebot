@@ -8,15 +8,20 @@ from colorama import Fore, Back, Style
 from flask import Flask, request, jsonify
 import os
 
-# Flask app setup
-app = Flask(__name__)
+async def start(update: Update, context: CallbackContext) -> None:
+    """Send welcome message"""
+    user = update.effective_user
+    await update.message.reply_text(
+        f'Hi {user.first_name}! Welcome to KMZ Checker Bot\n\n'
+        'Send me a combo file (text file with CC details) to start checking.'
+    )
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+async def help_command(update: Update, context: CallbackContext) -> None:
+    """Send help message"""
+    await update.message.reply_text(
+        'Help: Send me a combo file (text file) with CC details in format:\n'
+        'cardnumber|mm|yy|cvc'
+    )
 
 # Configuration
 TOKEN = os.getenv('TELEGRAM_TOKEN', '7481791551:AAETR-MWhG8wQJmmh5ZKScEg8msOQmAgcbc')
@@ -32,20 +37,20 @@ application.add_handler(CommandHandler("help", help_command))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 application.add_handler(MessageHandler(filters.Document.ALL, handle_document))
 
-async def start(update: Update, context: CallbackContext) -> None:
-    """Send welcome message"""
-    user = update.effective_user
-    await update.message.reply_text(
-        f'Hi {user.first_name}! Welcome to KMZ Checker Bot\n\n'
-        'Send me a combo file (text file with CC details) to start checking.'
-    )
+# Flask app setup
+app = Flask(__name__)
 
-async def help_command(update: Update, context: CallbackContext) -> None:
-    """Send help message"""
-    await update.message.reply_text(
-        'Help: Send me a combo file (text file) with CC details in format:\n'
-        'cardnumber|mm|yy|cvc'
-    )
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+
+
+
+
 
 async def handle_document(update: Update, context: CallbackContext) -> None:
     """Handle received combo file"""
