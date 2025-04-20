@@ -208,7 +208,7 @@ async def handle_text(update: Update, context: CallbackContext) -> None:
 # Setup webhook
 def set_webhook():
     """Set up the webhook URL"""
-    webhook_url = f'https://https://telebot-ep9a.onrender.com/{TOKEN}'  # Replace <your-cloud-url> with the correct URL
+    webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
     response = requests.get(f'https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}')
     if response.status_code == 200:
         print("Webhook set successfully!")
