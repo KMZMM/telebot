@@ -6,7 +6,8 @@ TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-WEBHOOK_URL = f"https://your-render-service-name.onrender.com/{TOKEN}"  # Change this later
+WEBHOOK_URL = f"https://telebot-ep9a.onrender.com/{TOKEN}"
+  # Change this later
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
