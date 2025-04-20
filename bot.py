@@ -157,7 +157,7 @@ application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_t
 def set_webhook():
     """Set up the webhook URL"""
     try:
-        webhook_url = f"https://your-app-url.ondigitalocean.app/{TOKEN}"
+        webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
         response = requests.get(
             f'https://api.telegram.org/bot{TOKEN}/setWebhook',
             params={'url': webhook_url}
