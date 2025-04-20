@@ -31,14 +31,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 if not TOKEN:
     raise ValueError("No BOT_TOKEN environment variable set!")
 
-# Initialize Telegram application
-application = Application.builder().token(TOKEN).build()
-
-# Add handlers
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("help", help_command))
-application.add_handler(MessageHandler(filters.Document.TEXT, handle_document))
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+# ========== HANDLER FUNCTIONS (DEFINE THESE FIRST) ==========
 
 async def start(update: Update, context: CallbackContext) -> None:
     """Send welcome message"""
@@ -72,6 +65,8 @@ async def handle_document(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         logger.error(f"Error handling document: {e}")
         await update.message.reply_text("Error processing your file. Please try again.")
+
+# ========== OTHER FUNCTIONS ==========
 
 async def process_combo(update: Update, context: CallbackContext, combo_file: str):
     """Process the combo file"""
@@ -107,7 +102,6 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
 
 async def simulate_card_processing(update, line_num, card_data, token, chat_id):
     """Simulate card processing with delay"""
-    # This is a placeholder - replace with your actual processing logic
     time.sleep(2)  # Simulate processing delay
     
     # Simulate different outcomes
@@ -147,6 +141,17 @@ async def handle_text(update: Update, context: CallbackContext) -> None:
     if 'chat_id' not in context.user_data:
         context.user_data['chat_id'] = text
         await update.message.reply_text('Chat ID saved. Now please send your combo file (as document):')
+
+# ========== APPLICATION SETUP ==========
+
+# Initialize Telegram application
+application = Application.builder().token(TOKEN).build()
+
+# Add handlers (NOW THESE FUNCTIONS ARE DEFINED)
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("help", help_command))
+application.add_handler(MessageHandler(filters.Document.TEXT, handle_document))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
 # Webhook setup
 def set_webhook():
