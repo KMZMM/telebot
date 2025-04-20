@@ -16,6 +16,20 @@ async def start(update: Update, context: CallbackContext) -> None:
         'Send me a combo file (text file with CC details) to start checking.'
     )
 
+async def handle_document(update: Update, context: CallbackContext) -> None:
+    """Handle received combo file"""
+    file = await update.message.document.get_file()
+    await file.download_to_drive('combo.txt')
+    
+    if 'token' not in context.user_data:
+        await update.message.reply_text('Please send your Telegram bot token:')
+        return
+    if 'chat_id' not in context.user_data:
+        await update.message.reply_text('Please send your Telegram chat ID:')
+        return
+    
+    await process_combo(update, context, 'combo.txt')
+
 async def handle_text(update: Update, context: CallbackContext) -> None:
     """Handle text messages"""
     text = update.message.text
@@ -59,25 +73,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-
-
-
-
-
-async def handle_document(update: Update, context: CallbackContext) -> None:
-    """Handle received combo file"""
-    file = await update.message.document.get_file()
-    await file.download_to_drive('combo.txt')
-    
-    if 'token' not in context.user_data:
-        await update.message.reply_text('Please send your Telegram bot token:')
-        return
-    if 'chat_id' not in context.user_data:
-        await update.message.reply_text('Please send your Telegram chat ID:')
-        return
-    
-    await process_combo(update, context, 'combo.txt')
 
 async def process_combo(update: Update, context: CallbackContext, combo_file: str):
     """Process the combo file"""
