@@ -1,1 +1,1 @@
-vmess://eyJhZGQiOiIxNjcuNzEuMTk2LjM0IiwiYWlkIjoiMCIsImFscG4iOiIiLCJmcCI6IiIsImhvc3QiOiIiLCJpZCI6IjhiYmMwMGZjLTUwNTAtNDcyNy04Yzk1LWIxZDBkYzE1MWZmZSIsIm5ldCI6InRjcCIsInBhdGgiOiIiLCJwb3J0IjoiNTU0OTAiLCJwcyI6IlBZQUUgU09ORSAtMVRC8J+HuPCfh6wiLCJzY3kiOiJhdXRvIiwic25pIjoiIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9
+vless://5463817d-30ea-4bef-805e-ae714070fb30@68.183.179.74:443/?type=tcp&encryption=none&flow=&security=tls&sni=google.com&alpn=http%2F1.1&allowInsecure=1&fp=chrome#SG-68
